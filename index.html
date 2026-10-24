@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f6fb">
-  <title>Calculator</title>
+  <meta name="description" content="A friendly calculator with calculation history and an everyday unit converter.">
+  <title>Calculator — a little help with the numbers</title>
   <style>
     :root {
       color-scheme: light;
@@ -13,12 +14,20 @@
       color: #1c2333;
       font-synthesis: none;
       text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      --accent: #6577ec;
+      --muted: #8991a4;
+      --surface: rgba(255, 255, 255, .9);
+      --soft: #f1f3f8;
     }
 
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
 
     body {
       min-height: 100vh;
+      min-height: 100svh;
       margin: 0;
       display: grid;
       place-items: center;
@@ -29,44 +38,150 @@
         #f4f6fb;
     }
 
-    .calculator {
-      width: min(100%, 368px);
-      padding: 22px;
-      border: 1px solid rgba(255, 255, 255, .85);
+    button, select, input { font: inherit; }
+
+    .app-shell {
+      width: min(100%, 940px);
+      display: grid;
+      grid-template-columns: minmax(0, 408px) minmax(280px, 340px);
+      align-items: stretch;
+      justify-content: center;
+      gap: 18px;
+      transition: max-width .35s ease;
+    }
+
+    .app-shell:not(.history-open) { width: min(100%, 408px); grid-template-columns: minmax(0, 408px); }
+
+    .calculator, .history-panel {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .88);
       border-radius: 28px;
-      background: rgba(255, 255, 255, .88);
+      background: var(--surface);
       box-shadow: 0 24px 70px rgba(36, 47, 83, .12), 0 3px 12px rgba(36, 47, 83, .05);
       backdrop-filter: blur(16px);
+    }
+
+    .calculator {
+      padding: 22px;
+      animation: arrive .4s cubic-bezier(.2, .75, .3, 1) both;
+    }
+
+    @keyframes arrive {
+      from { opacity: 0; transform: translateY(10px) scale(.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .topline {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 2px 3px 18px;
+      gap: 10px;
+      padding: 2px 2px 18px;
     }
 
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: #edf0ff;
+      color: var(--accent);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    h1, h2, p { margin: 0; }
+
     h1 {
-      margin: 0;
       font-size: 15px;
-      font-weight: 650;
-      letter-spacing: .01em;
+      font-weight: 700;
+      letter-spacing: -.02em;
     }
 
     .hint {
-      color: #8c94a7;
+      margin-top: 3px;
+      color: var(--muted);
       font-size: 11px;
     }
 
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+
+    .icon-button, .mode-tab, .swap-button, .history-clear, .history-item {
+      border: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .icon-button {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: var(--soft);
+      color: #56617b;
+      font-size: 17px;
+      transition: background .18s ease, color .18s ease, transform .18s ease;
+    }
+
+    .icon-button:hover { background: #e9edfb; color: var(--accent); }
+    .icon-button:active { transform: scale(.92); }
+
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 15px;
+      background: #f1f3f8;
+    }
+
+    .mode-tab {
+      min-height: 39px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: 11px;
+      background: transparent;
+      color: #7d8599;
+      font-size: 13px;
+      font-weight: 600;
+      transition: background .2s ease, color .2s ease, box-shadow .2s ease;
+    }
+
+    .mode-tab[aria-selected="true"] {
+      background: white;
+      color: #34405e;
+      box-shadow: 0 2px 7px rgba(36, 47, 83, .08);
+    }
+
+    .mode-panel { animation: reveal .24s ease both; }
+
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .mode-panel[hidden] { display: none; }
+
     .display {
-      min-height: 132px;
+      min-height: 133px;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
       justify-content: flex-end;
       gap: 10px;
       overflow: hidden;
-      padding: 16px 6px 23px;
+      padding: 16px 6px 22px;
       text-align: right;
     }
 
@@ -74,7 +189,7 @@
       width: 100%;
       min-height: 22px;
       overflow: hidden;
-      color: #8991a4;
+      color: var(--muted);
       font-size: 15px;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -89,111 +204,418 @@
       line-height: 1.1;
       text-overflow: ellipsis;
       white-space: nowrap;
+      transition: color .16s ease, opacity .16s ease;
     }
 
-    .keys {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+    .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid #a9b8ff;
+      outline-offset: 2px;
     }
 
-    button {
+    .key {
       min-width: 0;
-      aspect-ratio: 1.13;
+      aspect-ratio: 1.16;
       border: 0;
-      border-radius: 18px;
-      background: #f1f3f8;
+      border-radius: 17px;
+      background: var(--soft);
       color: #293044;
       cursor: pointer;
-      font: inherit;
       font-size: 21px;
       font-weight: 550;
-      transition: background .15s ease, transform .12s ease, box-shadow .15s ease;
+      transition: background .16s ease, color .16s ease, transform .14s cubic-bezier(.2, .8, .3, 1), box-shadow .16s ease;
       -webkit-tap-highlight-color: transparent;
     }
 
-    button:hover { background: #e8ebf3; }
-    button:active { transform: scale(.95); }
-    button:focus-visible { outline: 3px solid #a9b8ff; outline-offset: 2px; }
+    .key:hover { background: #e8ebf3; transform: translateY(-1px); }
+    .key:active { transform: scale(.94); }
 
-    .utility {
-      background: #e9edfb;
-      color: #5d6bb0;
-      font-size: 17px;
-    }
-
-    .operator {
-      background: #edf0ff;
-      color: #586be0;
-      font-size: 23px;
-    }
-
-    .operator.active { background: #6879ed; color: white; }
-
-    .equals {
-      background: #6678eb;
+    .utility-key { background: #e9edfb; color: #5d6bb0; font-size: 17px; }
+    .operator-key { background: #edf0ff; color: #586be0; font-size: 23px; }
+    .equals-key {
+      background: var(--accent);
       color: white;
       box-shadow: 0 7px 16px rgba(102, 120, 235, .24);
       font-size: 24px;
     }
 
-    .equals:hover { background: #596ce0; }
+    .equals-key:hover { background: #596ce0; }
 
-    @media (max-width: 380px) {
-      .calculator { padding: 18px; border-radius: 24px; }
+    .converter { padding-top: 24px; }
+
+    .converter-label {
+      display: block;
+      margin-bottom: 8px;
+      color: #59627a;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .field-group { margin-bottom: 17px; }
+
+    .select-wrap { position: relative; }
+
+    select, .amount-input {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid #e8ebf2;
+      border-radius: 14px;
+      background: #fff;
+      color: #293044;
+      font-size: 14px;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+
+    select { padding: 0 38px 0 13px; cursor: pointer; }
+
+    .amount-input {
+      padding: 0 14px;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    select:focus, .amount-input:focus {
+      border-color: #9ba8f4;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(101, 119, 236, .12);
+    }
+
+    .unit-row {
+      display: grid;
+      grid-template-columns: 1fr 42px 1fr;
+      align-items: end;
+      gap: 8px;
+    }
+
+    .unit-select-label { min-width: 0; }
+
+    .swap-button {
+      width: 40px;
+      height: 40px;
+      margin-bottom: 4px;
+      border-radius: 13px;
+      background: #edf0ff;
+      color: var(--accent);
+      font-size: 18px;
+      transition: background .18s ease, transform .25s ease;
+    }
+
+    .swap-button:hover { background: #e0e5ff; transform: rotate(180deg); }
+    .swap-button:active { transform: rotate(180deg) scale(.92); }
+
+    .conversion-result {
+      min-height: 132px;
+      margin-top: 23px;
+      padding: 18px;
+      overflow: hidden;
+      border-radius: 20px;
+      background: linear-gradient(140deg, #edf0ff, #f2efff);
+    }
+
+    .conversion-caption { color: #717b99; font-size: 12px; }
+
+    .conversion-value {
+      display: block;
+      margin-top: 9px;
+      overflow-wrap: anywhere;
+      color: #34405e;
+      font-size: clamp(29px, 8vw, 40px);
+      font-weight: 650;
+      letter-spacing: -.05em;
+      line-height: 1.1;
+      transition: opacity .15s ease;
+    }
+
+    .conversion-formula { display: block; margin-top: 8px; color: #828aa2; font-size: 12px; }
+    .save-conversion {
+      margin-top: 13px;
+      padding: 8px 11px;
+      border: 0;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .72);
+      color: #5867bd;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 650;
+      transition: background .16s ease, transform .16s ease;
+    }
+
+    .save-conversion:hover { transform: translateY(-1px); background: white; }
+    .save-conversion:active { transform: scale(.97); }
+    .converter-footnote { margin-top: 16px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+
+    .history-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 500px;
+      padding: 22px;
+      animation: reveal .28s ease both;
+    }
+
+    .history-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .history-heading h2 { font-size: 15px; font-weight: 700; }
+    .history-heading p { margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .history-clear { padding: 8px; border-radius: 10px; background: #f1f3f8; color: #798198; font-size: 12px; transition: background .16s ease, color .16s ease; }
+    .history-clear:hover { background: #ffecec; color: #c25d69; }
+
+    .history-list {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 8px;
+      overflow: auto;
+      margin: 20px -6px 0 0;
+      padding: 0 6px 0 0;
+    }
+
+    .history-empty { display: grid; flex: 1; place-items: center; color: var(--muted); font-size: 13px; text-align: center; }
+
+    .history-item {
+      display: block;
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      background: #f6f7fb;
+      text-align: left;
+      transition: background .16s ease, transform .16s ease;
+    }
+
+    .history-item:hover { transform: translateY(-1px); background: #eef0fa; }
+    .history-item-label { display: block; overflow: hidden; color: #7d8599; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    .history-item-value { display: block; margin-top: 5px; color: #303a55; font-size: 17px; font-weight: 650; }
+    .history-footnote { margin-top: 14px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+
+    .history-backdrop { display: none; }
+
+    @media (max-width: 740px) {
+      body { padding: 18px 14px; }
+      .app-shell, .app-shell:not(.history-open) { width: min(100%, 408px); grid-template-columns: minmax(0, 1fr); gap: 0; }
+      .calculator { padding: 19px; border-radius: 25px; }
       .keys { gap: 8px; }
-      button { border-radius: 15px; }
+      .key { border-radius: 15px; }
+      .history-panel {
+        position: fixed;
+        z-index: 5;
+        inset: auto 0 0;
+        max-height: min(78svh, 640px);
+        min-height: 320px;
+        padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
+        border-radius: 25px 25px 0 0;
+        background: #fff;
+        animation: sheet-in .26s cubic-bezier(.2, .75, .3, 1) both;
+      }
+
+      @keyframes sheet-in {
+        from { opacity: 0; transform: translateY(24px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .history-backdrop {
+        position: fixed;
+        z-index: 4;
+        inset: 0;
+        display: block;
+        border: 0;
+        background: rgba(27, 33, 51, .25);
+        backdrop-filter: blur(3px);
+      }
+    }
+
+    @media (max-width: 360px) {
+      body { padding: 12px 10px; }
+      .calculator { padding: 16px; }
+      .unit-row { grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr); gap: 5px; }
+      select { padding-right: 26px; padding-left: 10px; font-size: 12px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
     }
   </style>
 </head>
 <body>
-  <main class="calculator" aria-label="Calculator">
-    <header class="topline">
-      <h1>Calculator</h1>
-      <span class="hint">Ready when you are</span>
-    </header>
-    <section class="display" aria-live="polite" aria-atomic="true">
-      <div class="expression" id="expression" aria-label="Expression"></div>
-      <output class="result" id="result" aria-label="Display">0</output>
+  <main class="app-shell" id="app-shell">
+    <section class="calculator" aria-label="Calculator">
+      <header class="topline">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">÷</span>
+          <div>
+            <h1>Calculator</h1>
+            <p class="hint">A little help with the numbers</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-button" id="history-toggle" type="button" aria-label="Open calculation history" aria-controls="history-panel" aria-expanded="false" title="History">◷</button>
+        </div>
+      </header>
+
+      <div class="mode-tabs" role="tablist" aria-label="Calculator mode">
+        <button class="mode-tab" id="tab-calculator" type="button" role="tab" aria-selected="true" aria-controls="calculator-panel">⌗ <span>Calculator</span></button>
+        <button class="mode-tab" id="tab-converter" type="button" role="tab" aria-selected="false" aria-controls="converter-panel">⇄ <span>Convert</span></button>
+      </div>
+
+      <section class="mode-panel" id="calculator-panel" role="tabpanel" aria-labelledby="tab-calculator">
+        <div class="display" aria-live="polite" aria-atomic="true">
+          <div class="expression" id="expression" aria-label="Expression"></div>
+          <output class="result" id="result" aria-label="Display">0</output>
+        </div>
+        <div class="keys" aria-label="Calculator keys">
+          <button class="key utility-key" type="button" data-action="clear" aria-label="Clear">AC</button>
+          <button class="key utility-key" type="button" data-action="delete" aria-label="Delete last digit">⌫</button>
+          <button class="key utility-key" type="button" data-value="%" aria-label="Percent">%</button>
+          <button class="key operator-key" type="button" data-value="/" aria-label="Divide">÷</button>
+          <button class="key" type="button" data-value="7">7</button>
+          <button class="key" type="button" data-value="8">8</button>
+          <button class="key" type="button" data-value="9">9</button>
+          <button class="key operator-key" type="button" data-value="*" aria-label="Multiply">×</button>
+          <button class="key" type="button" data-value="4">4</button>
+          <button class="key" type="button" data-value="5">5</button>
+          <button class="key" type="button" data-value="6">6</button>
+          <button class="key operator-key" type="button" data-value="-" aria-label="Subtract">−</button>
+          <button class="key" type="button" data-value="1">1</button>
+          <button class="key" type="button" data-value="2">2</button>
+          <button class="key" type="button" data-value="3">3</button>
+          <button class="key operator-key" type="button" data-value="+" aria-label="Add">+</button>
+          <button class="key utility-key" type="button" data-action="sign" aria-label="Change sign">±</button>
+          <button class="key" type="button" data-value="0">0</button>
+          <button class="key" type="button" data-value=".">.</button>
+          <button class="key equals-key" type="button" data-action="equals" aria-label="Equals">=</button>
+        </div>
+      </section>
+
+      <section class="mode-panel converter" id="converter-panel" role="tabpanel" aria-labelledby="tab-converter" hidden>
+        <div class="field-group">
+          <label class="converter-label" for="category">What would you like to convert?</label>
+          <div class="select-wrap"><select id="category"></select></div>
+        </div>
+        <div class="field-group">
+          <label class="converter-label" for="amount">Amount</label>
+          <input class="amount-input" id="amount" type="number" inputmode="decimal" step="any" value="1" placeholder="Enter an amount">
+        </div>
+        <div class="unit-row">
+          <label class="unit-select-label">
+            <span class="converter-label">From</span>
+            <select id="from-unit" aria-label="Convert from"></select>
+          </label>
+          <button class="swap-button" id="swap-units" type="button" aria-label="Swap units">⇄</button>
+          <label class="unit-select-label">
+            <span class="converter-label">To</span>
+            <select id="to-unit" aria-label="Convert to"></select>
+          </label>
+        </div>
+        <div class="conversion-result" aria-live="polite" aria-atomic="true">
+          <span class="conversion-caption" id="conversion-caption">Result</span>
+          <output class="conversion-value" id="conversion-value">—</output>
+          <span class="conversion-formula" id="conversion-formula">Enter an amount to convert</span>
+          <button class="save-conversion" id="save-conversion" type="button">＋ Save to history</button>
+        </div>
+        <p class="converter-footnote">Conversions use standard unit definitions. Data sizes use decimal units (1 kB = 1,000 bytes).</p>
+      </section>
     </section>
-    <section class="keys" aria-label="Calculator keys">
-      <button class="utility" type="button" data-action="clear" aria-label="Clear">AC</button>
-      <button class="utility" type="button" data-action="delete" aria-label="Delete last digit">⌫</button>
-      <button class="utility" type="button" data-value="%" aria-label="Percent">%</button>
-      <button class="operator" type="button" data-value="/" aria-label="Divide">÷</button>
 
-      <button type="button" data-value="7">7</button>
-      <button type="button" data-value="8">8</button>
-      <button type="button" data-value="9">9</button>
-      <button class="operator" type="button" data-value="*" aria-label="Multiply">×</button>
-
-      <button type="button" data-value="4">4</button>
-      <button type="button" data-value="5">5</button>
-      <button type="button" data-value="6">6</button>
-      <button class="operator" type="button" data-value="-" aria-label="Subtract">−</button>
-
-      <button type="button" data-value="1">1</button>
-      <button type="button" data-value="2">2</button>
-      <button type="button" data-value="3">3</button>
-      <button class="operator" type="button" data-value="+" aria-label="Add">+</button>
-
-      <button class="utility" type="button" data-action="sign" aria-label="Change sign">±</button>
-      <button type="button" data-value="0">0</button>
-      <button type="button" data-value=".">.</button>
-      <button class="equals" type="button" data-action="equals" aria-label="Equals">=</button>
-    </section>
+    <aside class="history-panel" id="history-panel" aria-label="Calculation history" hidden>
+      <div class="history-heading">
+        <div>
+          <h2>Recent history</h2>
+          <p>Your calculations, saved on this device</p>
+        </div>
+        <button class="history-clear" id="history-clear" type="button">Clear all</button>
+      </div>
+      <div class="history-list" id="history-list" aria-live="polite"></div>
+      <p class="history-footnote">Tap a calculation to use its result again. History stays in this browser.</p>
+    </aside>
   </main>
+  <button class="history-backdrop" id="history-backdrop" type="button" aria-label="Close history" hidden></button>
+
   <script>
+    const units = {
+      Length: [
+        { label: "Kilometer (km)", symbol: "km", factor: 1000 },
+        { label: "Meter (m)", symbol: "m", factor: 1 },
+        { label: "Centimeter (cm)", symbol: "cm", factor: 0.01 },
+        { label: "Millimeter (mm)", symbol: "mm", factor: 0.001 },
+        { label: "Mile (mi)", symbol: "mi", factor: 1609.344 },
+        { label: "Yard (yd)", symbol: "yd", factor: 0.9144 },
+        { label: "Foot (ft)", symbol: "ft", factor: 0.3048 },
+        { label: "Inch (in)", symbol: "in", factor: 0.0254 }
+      ],
+      Weight: [
+        { label: "Kilogram (kg)", symbol: "kg", factor: 1 },
+        { label: "Gram (g)", symbol: "g", factor: 0.001 },
+        { label: "Milligram (mg)", symbol: "mg", factor: 0.000001 },
+        { label: "Metric ton (t)", symbol: "t", factor: 1000 },
+        { label: "Pound (lb)", symbol: "lb", factor: 0.45359237 },
+        { label: "Ounce (oz)", symbol: "oz", factor: 0.028349523125 },
+        { label: "Stone (st)", symbol: "st", factor: 6.35029318 }
+      ],
+      Temperature: [
+        { label: "Celsius (°C)", symbol: "°C", toBase: value => value, fromBase: value => value },
+        { label: "Fahrenheit (°F)", symbol: "°F", toBase: value => (value - 32) * 5 / 9, fromBase: value => value * 9 / 5 + 32 },
+        { label: "Kelvin (K)", symbol: "K", toBase: value => value - 273.15, fromBase: value => value + 273.15 }
+      ],
+      Area: [
+        { label: "Square kilometer (km²)", symbol: "km²", factor: 1000000 },
+        { label: "Hectare (ha)", symbol: "ha", factor: 10000 },
+        { label: "Acre (ac)", symbol: "ac", factor: 4046.8564224 },
+        { label: "Square meter (m²)", symbol: "m²", factor: 1 },
+        { label: "Square foot (ft²)", symbol: "ft²", factor: 0.09290304 },
+        { label: "Square inch (in²)", symbol: "in²", factor: 0.00064516 }
+      ],
+      Volume: [
+        { label: "Liter (L)", symbol: "L", factor: 1 },
+        { label: "Milliliter (mL)", symbol: "mL", factor: 0.001 },
+        { label: "Cubic meter (m³)", symbol: "m³", factor: 1000 },
+        { label: "US gallon (gal)", symbol: "gal", factor: 3.785411784 },
+        { label: "US cup (cup)", symbol: "cup", factor: 0.2365882365 },
+        { label: "US fluid ounce (fl oz)", symbol: "fl oz", factor: 0.0295735295625 }
+      ],
+      Speed: [
+        { label: "Kilometers per hour (km/h)", symbol: "km/h", factor: 1 },
+        { label: "Meters per second (m/s)", symbol: "m/s", factor: 3.6 },
+        { label: "Miles per hour (mph)", symbol: "mph", factor: 1.609344 },
+        { label: "Knot (kn)", symbol: "kn", factor: 1.852 }
+      ],
+      Time: [
+        { label: "Second (s)", symbol: "s", factor: 1 },
+        { label: "Millisecond (ms)", symbol: "ms", factor: 0.001 },
+        { label: "Minute (min)", symbol: "min", factor: 60 },
+        { label: "Hour (h)", symbol: "h", factor: 3600 },
+        { label: "Day (d)", symbol: "d", factor: 86400 },
+        { label: "Week (wk)", symbol: "wk", factor: 604800 }
+      ],
+      Data: [
+        { label: "Byte (B)", symbol: "B", factor: 1 },
+        { label: "Bit (bit)", symbol: "bit", factor: 0.125 },
+        { label: "Kilobyte (kB)", symbol: "kB", factor: 1000 },
+        { label: "Megabyte (MB)", symbol: "MB", factor: 1000000 },
+        { label: "Gigabyte (GB)", symbol: "GB", factor: 1000000000 },
+        { label: "Terabyte (TB)", symbol: "TB", factor: 1000000000000 }
+      ]
+    };
+
     const expressionDisplay = document.querySelector("#expression");
     const resultDisplay = document.querySelector("#result");
     const keys = document.querySelector(".keys");
     const operators = new Set(["+", "-", "*", "/"]);
+    const historyKey = "little-calculator-history-v1";
+    const appShell = document.querySelector("#app-shell");
+    const historyPanel = document.querySelector("#history-panel");
+    const historyToggle = document.querySelector("#history-toggle");
+    const historyBackdrop = document.querySelector("#history-backdrop");
+    const historyList = document.querySelector("#history-list");
+    const categorySelect = document.querySelector("#category");
+    const amountInput = document.querySelector("#amount");
+    const fromUnitSelect = document.querySelector("#from-unit");
+    const toUnitSelect = document.querySelector("#to-unit");
     let expression = "";
     let justEvaluated = false;
+    let history = JSON.parse(localStorage.getItem(historyKey) || "[]");
 
     function pretty(value) {
       return value.replace(/\*/g, "×").replace(/\//g, "÷").replace(/-/g, "−");
@@ -291,14 +713,63 @@
       render();
     }
 
+    function addHistory(item) {
+      history.unshift(item);
+      history = history.slice(0, 50);
+      localStorage.setItem(historyKey, JSON.stringify(history));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      historyList.replaceChildren();
+      if (history.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "history-empty";
+        empty.textContent = "Your recent calculations will show up here.";
+        historyList.append(empty);
+        return;
+      }
+
+      for (const item of history) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "history-item";
+        const label = document.createElement("span");
+        label.className = "history-item-label";
+        label.textContent = item.label;
+        const value = document.createElement("span");
+        value.className = "history-item-value";
+        value.textContent = item.value;
+        button.append(label, value);
+        button.addEventListener("click", () => {
+          if (item.kind === "conversion") {
+            setMode("converter");
+            categorySelect.value = item.category;
+            populateUnits(item.category, item.from, item.to);
+            amountInput.value = item.amount;
+            renderConversion();
+          } else {
+            setMode("calculator");
+            expression = item.value;
+            justEvaluated = true;
+            render();
+          }
+          closeHistory();
+        });
+        historyList.append(button);
+      }
+    }
+
     function calculate() {
       if (!expression) return;
       try {
-        const answer = formatNumber(evaluate(expression));
-        expressionDisplay.textContent = `${pretty(expression)} =`;
+        const source = expression;
+        const answer = formatNumber(evaluate(source));
+        expressionDisplay.textContent = `${pretty(source)} =`;
         resultDisplay.textContent = answer;
         expression = answer;
         justEvaluated = true;
+        addHistory({ kind: "calculation", label: `${pretty(source)} =`, value: answer });
       } catch (error) {
         resultDisplay.textContent = error.message === "Cannot divide by zero" ? "Cannot divide by 0" : "Error";
         justEvaluated = true;
@@ -341,7 +812,97 @@
       render();
     }
 
-    keys.addEventListener("click", (event) => {
+    function setMode(mode) {
+      const calculatorActive = mode === "calculator";
+      document.querySelector("#tab-calculator").setAttribute("aria-selected", String(calculatorActive));
+      document.querySelector("#tab-converter").setAttribute("aria-selected", String(!calculatorActive));
+      document.querySelector("#calculator-panel").hidden = !calculatorActive;
+      document.querySelector("#converter-panel").hidden = calculatorActive;
+    }
+
+    function populateUnits(category, fromSymbol, toSymbol) {
+      const options = units[category];
+      for (const [select, selectedSymbol] of [[fromUnitSelect, fromSymbol], [toUnitSelect, toSymbol]]) {
+        select.replaceChildren(...options.map(unit => {
+          const option = document.createElement("option");
+          option.value = unit.symbol;
+          option.textContent = unit.label;
+          return option;
+        }));
+        if (selectedSymbol && options.some(unit => unit.symbol === selectedSymbol)) {
+          select.value = selectedSymbol;
+        }
+      }
+    }
+
+    function selectedUnit(select) {
+      return units[categorySelect.value].find(unit => unit.symbol === select.value);
+    }
+
+    function renderConversion(record = false) {
+      const input = amountInput.value.trim();
+      const output = document.querySelector("#conversion-value");
+      const formula = document.querySelector("#conversion-formula");
+      const caption = document.querySelector("#conversion-caption");
+      const from = selectedUnit(fromUnitSelect);
+      const to = selectedUnit(toUnitSelect);
+
+      if (!input || !Number.isFinite(Number(input))) {
+        output.textContent = "—";
+        formula.textContent = "Enter a number to convert";
+        return;
+      }
+
+      const amount = Number(input);
+      const baseValue = from.toBase ? from.toBase(amount) : amount * from.factor;
+      const converted = to.fromBase ? to.fromBase(baseValue) : baseValue / to.factor;
+      const value = formatNumber(converted);
+      output.textContent = value;
+      caption.textContent = `${input} ${from.symbol} is`;
+      formula.textContent = `${value} ${to.symbol}`;
+
+      if (record) {
+        addHistory({
+          kind: "conversion",
+          label: `${input} ${from.symbol} → ${to.symbol}`,
+          value: `${value} ${to.symbol}`,
+          category: categorySelect.value,
+          from: from.symbol,
+          to: to.symbol,
+          amount: input
+        });
+      }
+    }
+
+    function openHistory() {
+      historyPanel.hidden = false;
+      historyBackdrop.hidden = false;
+      historyToggle.setAttribute("aria-expanded", "true");
+      appShell.classList.add("history-open");
+      renderHistory();
+    }
+
+    function closeHistory() {
+      historyPanel.hidden = true;
+      historyBackdrop.hidden = true;
+      historyToggle.setAttribute("aria-expanded", "false");
+      appShell.classList.remove("history-open");
+      historyToggle.focus();
+    }
+
+    categorySelect.replaceChildren(...Object.keys(units).map(category => {
+      const option = document.createElement("option");
+      option.value = category;
+      option.textContent = category;
+      return option;
+    }));
+    categorySelect.value = "Length";
+    populateUnits("Length", "km", "mi");
+    render();
+    renderHistory();
+    renderConversion();
+
+    keys.addEventListener("click", event => {
       const button = event.target.closest("button");
       if (!button) return;
       const { action, value } = button.dataset;
@@ -352,22 +913,48 @@
       else append(value);
     });
 
-    document.addEventListener("keydown", (event) => {
-      if (/^\d$/.test(event.key) || [".", "+", "-", "*", "/", "%"].includes(event.key)) {
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !historyPanel.hidden) {
+        closeHistory();
+      } else if (!document.querySelector("#calculator-panel").hidden
+        && (/^\d$/.test(event.key) || [".", "+", "-", "*", "/", "%"].includes(event.key))) {
         event.preventDefault();
         append(event.key);
-      } else if (event.key === "Enter" || event.key === "=") {
+      } else if (!document.querySelector("#calculator-panel").hidden && (event.key === "Enter" || event.key === "=")) {
         event.preventDefault();
         calculate();
-      } else if (event.key === "Backspace") {
+      } else if (!document.querySelector("#calculator-panel").hidden && event.key === "Backspace") {
         event.preventDefault();
         removeLast();
-      } else if (event.key === "Escape") {
-        clear();
       }
     });
 
-    render();
+    document.querySelector("#tab-calculator").addEventListener("click", () => setMode("calculator"));
+    document.querySelector("#tab-converter").addEventListener("click", () => setMode("converter"));
+    categorySelect.addEventListener("change", () => {
+      populateUnits(categorySelect.value);
+      renderConversion();
+    });
+    amountInput.addEventListener("input", () => renderConversion());
+    fromUnitSelect.addEventListener("change", () => renderConversion());
+    toUnitSelect.addEventListener("change", () => renderConversion());
+    document.querySelector("#save-conversion").addEventListener("click", () => renderConversion(true));
+    document.querySelector("#swap-units").addEventListener("click", () => {
+      const oldFrom = fromUnitSelect.value;
+      const oldTo = toUnitSelect.value;
+      const oldOutput = document.querySelector("#conversion-value").textContent;
+      fromUnitSelect.value = oldTo;
+      toUnitSelect.value = oldFrom;
+      if (oldOutput !== "—") amountInput.value = oldOutput;
+      renderConversion();
+    });
+    historyToggle.addEventListener("click", openHistory);
+    historyBackdrop.addEventListener("click", closeHistory);
+    document.querySelector("#history-clear").addEventListener("click", () => {
+      history = [];
+      localStorage.removeItem(historyKey);
+      renderHistory();
+    });
   </script>
 </body>
 </html>
