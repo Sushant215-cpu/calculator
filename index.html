@@ -41,18 +41,12 @@
     button, select, input { font: inherit; }
 
     .app-shell {
-      width: min(100%, 940px);
+      width: min(100%, 408px);
       display: grid;
-      grid-template-columns: minmax(0, 408px) minmax(280px, 340px);
-      align-items: stretch;
-      justify-content: center;
-      gap: 18px;
-      transition: max-width .35s ease;
+      grid-template-columns: minmax(0, 1fr);
     }
 
-    .app-shell:not(.history-open) { width: min(100%, 408px); grid-template-columns: minmax(0, 408px); }
-
-    .calculator, .history-panel {
+    .calculator {
       min-width: 0;
       overflow: hidden;
       border: 1px solid rgba(255, 255, 255, .88);
@@ -112,32 +106,15 @@
       font-size: 11px;
     }
 
-    .header-actions { display: flex; align-items: center; gap: 8px; }
-
-    .icon-button, .mode-tab, .swap-button, .history-clear, .history-item {
+    .mode-tab, .swap-button, .history-clear, .history-item {
       border: 0;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
 
-    .icon-button {
-      width: 38px;
-      height: 38px;
-      display: grid;
-      place-items: center;
-      border-radius: 13px;
-      background: var(--soft);
-      color: #56617b;
-      font-size: 17px;
-      transition: background .18s ease, color .18s ease, transform .18s ease;
-    }
-
-    .icon-button:hover { background: #e9edfb; color: var(--accent); }
-    .icon-button:active { transform: scale(.92); }
-
     .mode-tabs {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 4px;
       padding: 4px;
       border-radius: 15px;
@@ -348,8 +325,8 @@
     .history-panel {
       display: flex;
       flex-direction: column;
-      min-height: 500px;
-      padding: 22px;
+      min-height: 430px;
+      padding: 22px 2px 2px;
       animation: reveal .28s ease both;
     }
 
@@ -386,40 +363,12 @@
     .history-item-value { display: block; margin-top: 5px; color: #303a55; font-size: 17px; font-weight: 650; }
     .history-footnote { margin-top: 14px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 
-    .history-backdrop { display: none; }
-
     @media (max-width: 740px) {
       body { padding: 18px 14px; }
-      .app-shell, .app-shell:not(.history-open) { width: min(100%, 408px); grid-template-columns: minmax(0, 1fr); gap: 0; }
+      .app-shell { width: min(100%, 408px); grid-template-columns: minmax(0, 1fr); }
       .calculator { padding: 19px; border-radius: 25px; }
       .keys { gap: 8px; }
       .key { border-radius: 15px; }
-      .history-panel {
-        position: fixed;
-        z-index: 5;
-        inset: auto 0 0;
-        max-height: min(78svh, 640px);
-        min-height: 320px;
-        padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
-        border-radius: 25px 25px 0 0;
-        background: #fff;
-        animation: sheet-in .26s cubic-bezier(.2, .75, .3, 1) both;
-      }
-
-      @keyframes sheet-in {
-        from { opacity: 0; transform: translateY(24px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      .history-backdrop {
-        position: fixed;
-        z-index: 4;
-        inset: 0;
-        display: block;
-        border: 0;
-        background: rgba(27, 33, 51, .25);
-        backdrop-filter: blur(3px);
-      }
     }
 
     @media (max-width: 360px) {
@@ -450,14 +399,12 @@
             <p class="hint">A little help with the numbers</p>
           </div>
         </div>
-        <div class="header-actions">
-          <button class="icon-button" id="history-toggle" type="button" aria-label="Open calculation history" aria-controls="history-panel" aria-expanded="false" title="History">◷</button>
-        </div>
       </header>
 
       <div class="mode-tabs" role="tablist" aria-label="Calculator mode">
         <button class="mode-tab" id="tab-calculator" type="button" role="tab" aria-selected="true" aria-controls="calculator-panel">⌗ <span>Calculator</span></button>
         <button class="mode-tab" id="tab-converter" type="button" role="tab" aria-selected="false" aria-controls="converter-panel">⇄ <span>Convert</span></button>
+        <button class="mode-tab" id="tab-history" type="button" role="tab" aria-selected="false" aria-controls="history-panel">◷ <span>History</span></button>
       </div>
 
       <section class="mode-panel" id="calculator-panel" role="tabpanel" aria-labelledby="tab-calculator">
@@ -517,21 +464,20 @@
         </div>
         <p class="converter-footnote">Conversions use standard unit definitions. Data sizes use decimal units (1 kB = 1,000 bytes).</p>
       </section>
-    </section>
 
-    <aside class="history-panel" id="history-panel" aria-label="Calculation history" hidden>
-      <div class="history-heading">
-        <div>
-          <h2>Recent history</h2>
-          <p>Your calculations, saved on this device</p>
+      <section class="mode-panel history-panel" id="history-panel" role="tabpanel" aria-labelledby="tab-history" hidden>
+        <div class="history-heading">
+          <div>
+            <h2>Recent history</h2>
+            <p>Your calculations, saved on this device</p>
+          </div>
+          <button class="history-clear" id="history-clear" type="button">Clear all</button>
         </div>
-        <button class="history-clear" id="history-clear" type="button">Clear all</button>
-      </div>
-      <div class="history-list" id="history-list" aria-live="polite"></div>
-      <p class="history-footnote">Tap a calculation to use its result again. History stays in this browser.</p>
-    </aside>
+        <div class="history-list" id="history-list" aria-live="polite"></div>
+        <p class="history-footnote">Tap a calculation to use its result again. History stays in this browser.</p>
+      </section>
+    </section>
   </main>
-  <button class="history-backdrop" id="history-backdrop" type="button" aria-label="Close history" hidden></button>
 
   <script>
     const units = {
@@ -604,10 +550,7 @@
     const keys = document.querySelector(".keys");
     const operators = new Set(["+", "-", "*", "/"]);
     const historyKey = "little-calculator-history-v1";
-    const appShell = document.querySelector("#app-shell");
     const historyPanel = document.querySelector("#history-panel");
-    const historyToggle = document.querySelector("#history-toggle");
-    const historyBackdrop = document.querySelector("#history-backdrop");
     const historyList = document.querySelector("#history-list");
     const categorySelect = document.querySelector("#category");
     const amountInput = document.querySelector("#amount");
@@ -813,11 +756,11 @@
     }
 
     function setMode(mode) {
-      const calculatorActive = mode === "calculator";
-      document.querySelector("#tab-calculator").setAttribute("aria-selected", String(calculatorActive));
-      document.querySelector("#tab-converter").setAttribute("aria-selected", String(!calculatorActive));
-      document.querySelector("#calculator-panel").hidden = !calculatorActive;
-      document.querySelector("#converter-panel").hidden = calculatorActive;
+      for (const name of ["calculator", "converter", "history"]) {
+        const active = name === mode;
+        document.querySelector(`#tab-${name}`).setAttribute("aria-selected", String(active));
+        document.querySelector(`#${name}-panel`).hidden = !active;
+      }
     }
 
     function populateUnits(category, fromSymbol, toSymbol) {
@@ -875,19 +818,13 @@
     }
 
     function openHistory() {
-      historyPanel.hidden = false;
-      historyBackdrop.hidden = false;
-      historyToggle.setAttribute("aria-expanded", "true");
-      appShell.classList.add("history-open");
+      setMode("history");
       renderHistory();
     }
 
     function closeHistory() {
-      historyPanel.hidden = true;
-      historyBackdrop.hidden = true;
-      historyToggle.setAttribute("aria-expanded", "false");
-      appShell.classList.remove("history-open");
-      historyToggle.focus();
+      setMode("calculator");
+      document.querySelector("#tab-calculator").focus();
     }
 
     categorySelect.replaceChildren(...Object.keys(units).map(category => {
@@ -931,6 +868,7 @@
 
     document.querySelector("#tab-calculator").addEventListener("click", () => setMode("calculator"));
     document.querySelector("#tab-converter").addEventListener("click", () => setMode("converter"));
+    document.querySelector("#tab-history").addEventListener("click", openHistory);
     categorySelect.addEventListener("change", () => {
       populateUnits(categorySelect.value);
       renderConversion();
@@ -948,8 +886,6 @@
       if (oldOutput !== "—") amountInput.value = oldOutput;
       renderConversion();
     });
-    historyToggle.addEventListener("click", openHistory);
-    historyBackdrop.addEventListener("click", closeHistory);
     document.querySelector("#history-clear").addEventListener("click", () => {
       history = [];
       localStorage.removeItem(historyKey);
